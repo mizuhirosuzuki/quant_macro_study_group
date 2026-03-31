@@ -1,0 +1,285 @@
+\documentclass[unicode,9pt]{beamer}% 'unicode'が必要
+\usepackage[whole,autotilde]{bxcjkjatype}% pdfLaTeXで日本語したい
+\usetheme{metropolis}
+\usepackage[sort]{natbib}
+\usepackage{bbm}
+\usepackage{bm}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{ulem}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{multicol}
+\usepackage{lscape}
+\usepackage{dcolumn}
+\usepackage{makecell}
+\usepackage{setspace} 
+\usepackage{amsthm}
+\usepackage{threeparttable}
+\usepackage{appendixnumberbeamer}
+\usepackage{mathtools}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks = true, %Colours links instead of ugly boxes
+  urlcolor   = blue, %Colour for external hyperlinks
+  linkcolor  = blue, %Colour of internal links
+  citecolor  = red   %Colour of citations
+  %nolinks    = true
+}
+\newtheorem{prop}{Proposition} 
+\setbeamertemplate{theorems}[numbered]
+
+%\newcommand\Wider[2][3em]{
+%\makebox[\linewidth][c]{
+%  \begin{minipage}{\dimexpr\textwidth+#1\relax}
+%  \raggedright#2
+%  \end{minipage}
+%  }
+%}
+%
+%\newenvironment{notes}[2][Notes]{\begin{minipage}[t]{\linewidth}\tiny{\itshape#1: }}{\end{minipage}}
+
+%\usetheme{CambridgeUS}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+\title{「定量的マクロ経済学と数値計算」勉強会 第三章: \\ 動的計画法}
+\author{鈴木瑞洋}
+\date{2026/04/05}
+
+\begin{document}
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}\frametitle{ベルマン方程式を使って動学モデルを解く方法 （動的計画法） を説明する}
+  \begin{itemize}
+      \item ロビンソン・クルーソー経済の導入
+      \item ベルマン方程式
+      \item 有限期間モデル
+        \begin{itemize}
+            \item 後ろ向き帰納法
+            \item スプライン補間を使った関数の近似
+        \end{itemize}
+      \item 無限期間モデル
+      \item 無限期間モデルを解くための価値関数反復法 (VFI)
+      \item VFIより早い政策関数反復法 (PFI)
+      \item リスクの導入（それに伴う状態変数の追加）
+      \item 構造推定
+  \end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{ロビンソン・クルーソー経済}
+  \begin{itemize}
+      \item 最適な消費・貯蓄計画をたてる
+        \begin{align*}
+          &\max_{\{c_t, k_{t+1}\}_{t=0}^T} \quad \sum_{t = 0}^T \beta^t u(c_t) \\
+          \text{subject to} &\quad c_t + k_{t + 1} \le f(k_t) \quad (t = 0, 1, \dots, T)
+        \end{align*}
+        \begin{itemize}
+          \item 最後の期（$t = T$）では貯蓄をしても意味がないので、$k_{T+1}=0$
+          \item 借り入れはできない：$k_t \ge 0 \quad (t = 1, \dots, T)$
+          \item 資源は無駄にしないので、制約は等号で成立する：$c_t + k_{t + 1} = f(k_t)$
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{ベルマン方程式}
+  \begin{itemize}
+    \item 価値関数 $V_t(k_t)$: $t$期において$k_t$だけ資本を保有していた場合に$t$期以降で達成できる最大効用
+%      \begin{align*}
+%        V_t(k_t) = &\max_{\{c_s, k_{s+1}\}_{s=t}^T} \{u(c_t) + \beta u(c_{t + 1}) + \cdots + \beta^{T - t} u(c_T) \} \\
+%        &\text{subject to} \quad c_s + k_{s + 1} = f(k_s) \quad (s = t, t + 1, \dots, T)
+%      \end{align*}
+      $$
+        V_t(k_t) = \max \{u(c_t) + \beta u(c_{t + 1}) + \cdots + \beta^{T - t} u(c_T) \}
+      $$
+      これは$k_t$という状態変数のもとで最適な消費を$t$期から$T$期まで求める問題
+    \item これは次のように書き換えられる
+      \begin{align*}
+        V_t(k_t) 
+        &= \max \{u(c_t) + \beta u(c_{t + 1}) + \cdots + \beta^{T - t} u(c_T) \} \\
+        &= \max \{u(c_t) + \beta \max \{u(c_{t + 1}) + \cdots + \beta^{T - t - 1} u(c_T) \} \} \\
+        &= \max \{u(f(k_t) - k_{t+1}) + \beta V_{t+1}(k_{t+1})\}
+      \end{align*}
+      これは「$t+1$期からは$k_{t+1}(=f(k_t) - c_t)$という状態変数からスタートして最適な消費を$t+1$期から$T$期まで決める (*)」として、今期の状態変数$k_t$のもとでの最適な消費$c_t$を決める、という問題 \\
+      $\Rightarrow$ ざっくりいうと、(*) が成り立つもとで、「$t$期にどれだけ消費・貯蓄をするか」という問題に単純化されている
+  \end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{有限期間モデルでの後ろ向き帰納法}
+  \begin{itemize}
+      \item 前のページからちょっと書き換えて
+        $$
+        V_t(k_t) = \max_{0 \le c_t \le f(k_t)} \{u(c_t) + \beta V_{t+1}(f(k_t) - c_t)\}
+        $$
+        なので、$V_{t+1}(k_{t+1})$がわかれば、最適な$c_t$を求められる
+      \item 最後の期$t=T$では、
+        \begin{align*}
+          V_T(k_T)
+          &= \max_{0 \le c_T \le f(k_T)} u(c_T) \quad \text{(次の期がないので$V_{T+1}$の項はない)} \\
+          &= u(f(k_T)) \quad \text{(次の期のために貯蓄をしないので$k_{T+1}=0$)}
+        \end{align*}
+      \item $t=T-1$期では
+        $$
+        V_{T-1}(k_{T-1}) = \max_{0 \le c_{T-1} \le f(k_{T-1})} \{u(c_{T-1}) + \beta V_{T}(f(k_{T-1}) - c_{T-1})\}
+        $$
+        を解く
+        %（これは$V_T(k_T)$が解析的にわかっているから難しくない）
+%      \item $t=T-2$期では
+%        $$
+%        V_{T-2}(k_{T-2}) = \max_{0 \le c_{T-2} \le f(k_{T-2})} \{u(c_{T-2}) + \beta V_{T-1}(f(k_{T-2}) - c_{T-2})\}
+%        $$
+%        を解く（これは$V_{T-1}(k_{T-1})$が解析的にわかっていないから難しい）
+  \end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{3次のスプライン補間}
+  \begin{itemize}
+    \item 各期の状態変数$k_t$を離散化すれば（$k_{t, i} \in \{k_1, \dots, k_N \}$）、$V_{T-1}(k_{T-1, i})$は解ける（$V_T(k_T)$が解析的にわかっているので）
+    \item ただし、このままではグリッド上にない$k_{T-1}$での$V_{T-1}(k_{T-1})$はわからない
+      \item $t=T-2$期では
+        $$
+        V_{T-2}(k_{T-2}) = \max_{0 \le c_{T-2} \le f(k_{T-2})} \{u(c_{T-2}) + \beta V_{T-1}(f(k_{T-2}) - c_{T-2})\}
+        $$
+        を解くが、$V_{T-1}(k_{T-1})$がすべての$k_{T-1}$でわからないと解けない
+    \item 内挿法で$V_{T-1}(k_{T-1})$を近似する！（教科書2.8.1も参照）
+    \item 3次のスプライン補間：
+      \begin{itemize}
+        \item $k_T \in [k_{i}, k_{i+1}]$について、$V_{T-1}(k_{T-1})$を$\tilde{V}_{T-1}(k_{T-1}) = a_i + b_i (k_{T-1} - k_i) + c_i (k_{T-1} - k_i)^2 + d_i (k_{T-1} - k_i)^3$で近似
+        \item $a_i, b_i, c_i, d_i$は各グリッド上で$\tilde{V}_{T-1}(k_{T-1})$が連続でこの一階微分、二階微分も連続になるように決められる
+        \item （ざっくりいうと、$\tilde{V}_{T-1}(k_{T-1})$がいい感じに滑らかになるように決められる）
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{無限期間モデル}
+  \begin{itemize}
+      \item 無限期間モデルに拡張：
+        \begin{align*}
+          &\max_{\{c_t, k_{t+1}\}_{t=0}^{\infty}} \quad \sum_{t=0}^{\infty} \beta^t u(c_t) \\
+          \text{subject to} &\quad c_t + k_{t+1} = f(k_t) + (1 - \delta) k_t, \quad k_0 \ \text{given}
+        \end{align*}
+      \item ベルマン方程式に書き直すと
+        $$
+        V(k) = \max_{k'} \{ u(f(k) + (1 - \delta)k - k') + \beta V(k') \}
+        $$
+        \begin{itemize}
+            \item 添字$t$がなくなっているのは、無限期間モデルでは残存期間は常に無限なので、今が何期目かは意思決定に必要でないため
+        \end{itemize}
+      \item 一階条件は
+        \begin{itemize}
+            \item ベルマン方程式の右辺の最適化問題を考えて
+              $$
+              u'(f(k) + (1 - \delta) k - k') = \beta V'(k')
+              $$
+            \item \href{https://www.ier.hit-u.ac.jp/~nabe/DP1JIS.pdf}{包絡線定理}より、ベルマン方程式の両辺を$k$で微分して
+              $$
+              V'(k) = (1 - \delta + f'(k)) u'(f(k) + (1 - \delta)k - k')
+              $$
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{価値関数反復法（VFI）}
+  \begin{itemize}
+    \item 適当に各$k_i$での$V^{(0)}(k_i)$を決めて、以下のように$V^{(n)}(k)$を更新する
+      $$
+      V^{(n+1)}(k_i) = \max_{k'} \{u(f(k_i) + (1 - \delta) k_i - k') + \beta V^{(n)}(k') \}
+      $$
+    \item 各$k_i$での$V^{(n+1)}(k_i)$と$V^{(n)}(k_i)$が十分小さくなったらおしまい
+    \item 各$k_i$での最適な$k'$を求める方法：
+      \begin{itemize}
+          \item グリッドサーチ：$k'$も離散化して、右辺を最大化する$k'$を求める
+          \item パラメトリック・アプローチ：$k'$を連続として扱い、$V^{(n)}$を内挿法で近似しながら右辺を最大化する$k'$を求める
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{政策関数反復法 （PFI）}
+  \begin{itemize}
+    \item VFIより早い、政策関数の繰り返し計算を使うアルゴリズム
+    \item いい感じに各$k_i$での政策関数$g^{[0]}(k_i)$を決めて、
+      \begin{enumerate}
+        \item 適当に各$k_i$での$\tilde{V}^{(0)}(k_i)$を決めたあとに 
+          $$
+          \tilde{V}^{(n)}(k) = u(f(k) + (1 - \delta) k - g^{[0]}(k)) + \beta \tilde{V}^{(n-1)}(g^{[0]}(k))
+          $$ を収束するまで繰り返して$\tilde{V}(k)$を得る
+        \item 各$k_i$で 
+          $$
+          V^{[0]}(k_i) = \max_{k'} \{ u(f(k_i) + (1 - \delta) k_i - k') + \beta \tilde{V}(k') \}
+          $$ の解となる$k'$を求め、それを新しい政策関数 $k' = g^{[1]}(k_i)$とする
+        \item ステップ1と2を、価値関数$V^{[m]}$ (または政策関数$g^{[m]}$)が収束するまで繰り返す
+      \end{enumerate}
+    \item （ここで上添字が[]のときはiterationが何回目かを表していて、()のときは各iteration内の価値関数の反復計算が何回目かを表している）
+    \item ステップ1では最適化問題を解いてなくて、ただ繰り返し計算しているだけなので早い
+    \item 直感的には、「いい感じ」の価値関数をぱぱっと計算した後で重たい最適化を解くことで iteration の数を減らせる、ということ？
+  \end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{VFI vs PFI と収束条件}
+  \begin{itemize}
+    \item ここまでに出てきた計算アルゴリズム、2つの次元がある？
+      \begin{enumerate}
+          \item VFI vs PFI
+          \item 収束条件として価値関数を使うか政策関数を使うか
+      \end{enumerate}
+  \end{itemize}
+
+  \begin{figure}[h]
+    \centering
+    \caption{計算時間の比較（カッコ内はiterationの回数）}
+    \includegraphics[width = 0.7\textwidth]{"images/runtime_comparison.png"}
+  \end{figure}
+
+  \begin{itemize}
+      \item VFIを使うとき、政策関数を収束条件に使ったほうが収束が早い（ただし価値関数の誤差は大きくなる）
+      \item PFIを使うとき、たしかにVFIよりiterationの回数は減るが、計算時間は増える（各iteration内で価値関数の繰り返し計算もしないといけないため？）
+        \begin{itemize}
+            \item 実際、価値関数の繰り返し計算の収束条件を緩くすることで、最終的な誤差を増やすことなく計算時間を1.2msくらいまで減らせた
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{構造推定}
+  \begin{itemize}
+      \item 「経済主体の意思決定に基づく理論モデルを構築したうえでパラメータを推定して分析する方法を構造推定と呼ぶ」
+      \item 教科書にある例をめっちゃ抽象化するとこんな感じ：
+        \begin{enumerate}
+            \item 経済モデルを立てる（ここでは不確実性のある動学モデル）
+            \item いくつかのパラメータをカリブレーションから求める（違うデータから求めたり、先行研究からとってきたり、直感的な値をとってきたり）
+            \item 残りのパラメータを推定する
+              \begin{enumerate}
+                \item あるパラメータのもとでモデルを解き政策関数を求める （ここで、この章で学んだことを使う）
+                \item 政策関数を使ってシミュレートされたデータと実際のデータとの乖離を測る
+                \item この乖離が小さくなるようなパラメータを求める
+              \end{enumerate}
+        \end{enumerate}
+      \item 私がいつもわからないのは
+        \begin{itemize}
+            \item どのパラメータはカリブレーションで求めて良くてどのパラメータを推定すべき？
+            \item パラメータの識別条件は何？（どんなときに推定にバイアスが生まれる？）
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+%\begin{frame}\frametitle{}
+%  \begin{figure}[h]
+%    \centering
+%    \caption{教科書 図2.4}
+%    \includegraphics[width = 0.7\textwidth]{"images/egm.png"}
+%  \end{figure}
+%\end{frame}
+
+
+
+%\begin{frame}\frametitle{参考文献}
+%  \begin{itemize}
+%      \item TBA
+%  \end{itemize}
+%\end{frame}
+
+
+
+
+\end{document}

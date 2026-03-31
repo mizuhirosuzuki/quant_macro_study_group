@@ -1,0 +1,278 @@
+\documentclass[unicode,9pt]{beamer}% 'unicode'が必要
+\usepackage[whole,autotilde]{bxcjkjatype}% pdfLaTeXで日本語したい
+\usetheme{metropolis}
+\usepackage[sort]{natbib}
+\usepackage{bbm}
+\usepackage{bm}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{ulem}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{multicol}
+\usepackage{lscape}
+\usepackage{dcolumn}
+\usepackage{makecell}
+\usepackage{setspace} 
+\usepackage{amsthm}
+\usepackage{threeparttable}
+\usepackage{appendixnumberbeamer}
+\usepackage{mathtools}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks = true, %Colours links instead of ugly boxes
+  urlcolor   = blue, %Colour for external hyperlinks
+  linkcolor  = blue, %Colour of internal links
+  citecolor  = red   %Colour of citations
+  %nolinks    = true
+}
+\newtheorem{prop}{Proposition} 
+\setbeamertemplate{theorems}[numbered]
+
+%\newcommand\Wider[2][3em]{
+%\makebox[\linewidth][c]{
+%  \begin{minipage}{\dimexpr\textwidth+#1\relax}
+%  \raggedright#2
+%  \end{minipage}
+%  }
+%}
+%
+%\newenvironment{notes}[2][Notes]{\begin{minipage}[t]{\linewidth}\tiny{\itshape#1: }}{\end{minipage}}
+
+%\usetheme{CambridgeUS}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+\title{「定量的マクロ経済学と数値計算」勉強会 第四章: \\ オイラー方程式と時間反復法}
+\author{鈴木瑞洋}
+\date{2026/04/12}
+
+\begin{document}
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}\frametitle{}
+  \begin{itemize}
+      \item 
+  \end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{社会計画者の問題}
+  \begin{itemize}
+      \item 社会計画者の問題：
+        \begin{align*}
+          &\max_{\{c_t, k_{t+1}\}_{t=0}^{\infty}} \quad \sum_{t=0}^{\infty} \beta^t u(c_t) \\
+          \text{subject to} &\quad c_t + k_{t+1} = f(k_t) + (1 - \delta) k_t \left( \equiv \tilde{f}(k_{t}) \right), \quad k_0 \ \text{given}
+        \end{align*}
+      \item 最大化の条件から以下のオイラー方程式が得られる：
+        $$
+        u'(c_t) = \beta u'(c_{t+1}) \tilde{f}'(k_{t+1})
+        $$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{分権経済の問題}
+  \begin{itemize}
+      \item 利潤最大化をする企業と効用最大化をする家計
+      \item 税などによる歪みがなければ、分権経済における消費・貯蓄の流列と社会計画者による消費・貯蓄の流列は一致 \\
+        $\Rightarrow$ 社会計画者のベルマン方程式を解くことで、分権経済における消費・貯蓄が理解できる
+      \item 歪みがあると、これらの消費・貯蓄の流列が一致しない
+        $\Rightarrow$ 社会計画者のベルマン方程式を解くのとは異なる、別のアプローチが必要
+  \end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{時間反復法 (TI) はオイラー方程式を使って動学モデルを解く方法}
+  \begin{itemize}
+    \item ゴール：政策関数 $c = h(k)$ を求めること
+      \begin{itemize}
+        \item 第3章では政策関数が $k' = g(k)$ だったのにね
+      \end{itemize}
+    \item 税がない場合のオイラー方程式を書き換える：
+      \begin{align*}
+        u'(c) 
+        &= \beta u'(c') \tilde{f}'(k')  \\
+        &= \beta u'(h(k')) \tilde{f}'(k') \\
+        &= \beta u'(h(\tilde{f}(k) - c)) \tilde{f}'(\tilde{f}(k) - c) 
+      \end{align*}
+      （最後の等号は$k' = f(k) + (1 - \delta)k - c = \tilde{f}(k) - c$を使った）
+    \item TIでは
+      \begin{enumerate}
+        \item 各資産のグリッド$k_i$上における$h^{(0)}(k_i)$をいい感じに決めて、求根問題
+          $$
+            u'(c) = \beta u'(h^{(0)}(\tilde{f}(k) - c)) \tilde{f}'(\tilde{f}(k) - c) 
+          $$
+          を解く$c$を求め、$h^{(1)}(k_i) = c$とする
+        \item $h^{(n)}$が収束するまでこれをする
+      \end{enumerate}
+    \item 注意点：
+      \begin{itemize}
+          \item VFIと違い、TIにより真の政策関数に収束する理論的保証はない
+          \item 政策関数の初期値 $\{h^{0}(k_i) \}_{i=1}^N$ は大事（コードでは $h^{0}(k_i) = k_i$としてる）
+          \item 資産のグリッド上以外の点でも$h^{(n)}(k')$が計算できないといけないので、近似が必要（ここで教科書ではチェビシェフ多項式を使った多項式補間を紹介してる（4.2.1））
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{内生的グリッド法（EGM）}
+  \begin{itemize}
+    \item また政策関数$c = h(k)$を考えて、オイラー方程式から
+      $$
+      u'(c) = \beta u'(\underbrace{h(k')}_{=c'}) \tilde{f}'(k')
+      $$
+    \item 状態変数$k$を離散化するのではなく、制御変数$k'$を離散化する
+      \begin{itemize}
+        \item このモデルで制御変数は$c$と$k'$の2つあるが、ここでは(i) $c$の政策関数を考え、(ii) $k'$を離散化する
+        \item $c$の政策関数がわかれば予算制約式から$k' = g(k) = \tilde{f}(k) - h(k)$で$k'$の政策関数もわかることに注意
+      \end{itemize}
+      \item EGMのステップは以下の通り：
+        \begin{enumerate}
+          \item 各グリッド$k'_i$上での政策関数の値 $h^{(0)}(k'_i)$を適当に決める
+          \item オイラー方程式から$c_i = u'^{-1} \left( \beta u'(h^{(0)})(k'_i) \tilde{f}' (k'_i) \right)$を各$k'_i$で計算
+          \item 予算制約から各$k'_i$で$\tilde{f}(k_i) = c_i + k'_i$を解く$k_i$を計算
+          \item ステップ2の$c_i$とステップ3の$k_i$のペアから$h^{(1)}(k_i)$を計算し、$h^{(1)}$を近似
+          \item ステップ2から4を、$h^{(n)}(k'_i)$が収束するまで繰り返す
+        \end{enumerate}
+      \item ステップ3で求根問題を解かないといけないが、これを回避するクレバーな方法も提案されている（\href{https://stanford.edu/~maliars/Files/Chapter7HandbookCE2014.pdf}{Maliar and Maliar (2013)}の7.2.1を参照）)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{リスクの導入}
+  \begin{itemize}
+    \item AR(1)過程に従う生産性ショックを導入：
+      \begin{align*}
+        f(k_t) &= e^{z_t} k_t^{\alpha} \\
+        z_{t+1} &= \rho z_t + \varepsilon_{t+1}, \quad \varepsilon_{t+1} \sim N(0, \sigma_z^2)
+      \end{align*}
+      \item 0期での社会計画者問題は不確実性を踏まえて以下のようになる
+        \begin{align*}
+          &\max_{\{c_t, k_{t+1}\}_{t=0}^{\infty}} \quad E_0 \left[ \sum_{t=0}^{\infty} \beta^t u(c_t) \right] \\
+          \text{subject to} 
+          &\quad c_t + k_{t+1} = e^{z_t} k_t^{\alpha} + (1 - \delta) k_t \left( \equiv \tilde{f}(k_{t}, z_t) \right), \quad k_0 \ \text{given} \\
+          &\quad z_{t+1} = \rho z_t + \varepsilon_{t+1}, \quad \varepsilon_{t+1} \sim N(0, \sigma_z^2), \quad z_0 \ \text{given}
+        \end{align*}
+      \item $t$期の時点でのオイラー方程式はこうなる：
+        $$
+          u'(c_t) = \beta E_t \left[ u'(c_{t+1}) \tilde{f}'(k_{t+1}, z_{t+1}) \right]
+        $$
+        ($E_t[\cdot]$は「$t$期までの情報で条件付けた期待値」ということ)
+      \item ゴール：政策関数 $c_t = h(k_t, z_t)$ を得ること
+  \end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{期待値の計算とAR(1)過程の離散化}
+  \begin{itemize}
+      \item オイラー方程式の右辺の期待値はどう計算する？
+      \item AR(1)過程をとる$z_t$を離散化して ($z_t \in \{z_1, z_2, \dots, z_{N_z} \}$)、以下の遷移確率行列を考える
+        $$
+        P = \begin{bmatrix}
+          p_{11} & \cdots & \cdots & p_{1N_z} \\
+          p_{21} & \ddots & & \vdots \\
+          \vdots & & \ddots & \vdots \\
+          p_{N_z1} & \cdots & \cdots & p_{N_zN_z}
+        \end{bmatrix}
+        $$
+      \item $z_t = z_j$のとき
+        \begin{align*}
+          E_t \left[ u'(c_{t+1}) \tilde{f}'(k_{t+1}, z_{t+1}) \right] 
+          &= E \left[u'(c_{t+1}) \tilde{f}'(k_{t+1}, z_{t+1}) | z_j \right] \\
+          &= \sum_{k=1}^{N_z} p_{jk} \left( u'(c_{t+1}) \tilde{f}'(k_{t+1}, z_{t+1}) \right) 
+        \end{align*}
+      \item AR(1)過程から遷移確率行列を得る方法としてTauchenの方法やRouwenhorstの方法がある （詳しくは教科書の付録Cや\href{https://makotonakajima.github.io/homepage/note-num-ar1.pdf}{Nakajima先生の講義ノート}を参照のこと）
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}\frametitle{完全予見を使った解法}
+  \begin{itemize}
+    \item これまで考えてきた「動学モデルを解いて政策関数を計算する」というアプローチは状態変数の数が増えると難しくなる（次元の呪い）
+    \item 将来起きることとそのタイミング（例：増税）がわかっているとして、定常点へ至る経路（移行経路）を求める
+      \bigskip
+    \item （少なくとも今考えているモデルでは）移行経路が効用を最大化するので、移行経路を求めることと政策関数を求めることは同じ（ということ？）
+      \begin{itemize}
+          \item 定常点へ至らない経路では、消費が0になったり資本が0になったりし、効用が最大化されない
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{$(c_t, k_t)$が時間を通じてどう変化するかを表す位相図を描くと、定常点へ至る唯一の移行経路があることがわかる}
+  \begin{figure}[h]
+    \centering
+    \caption{教科書 図4.3にやや加筆したもの}
+    \includegraphics[width = 0.7\textwidth]{"images/phrase_diagram_1.png"}
+  \end{figure}
+\end{frame}
+
+\begin{frame}\frametitle{ある$k_0$のもとで$c_0$が移行経路上にないと、定常点へ到達しない}
+  \begin{figure}[h]
+    \centering
+    %\caption{}
+    \includegraphics[width = 0.7\textwidth]{"images/phrase_diagram_2.png"}
+  \end{figure}
+\end{frame}
+
+\begin{frame}\frametitle{ある$k_0$のもとで$c_0$が移行経路上にないと、定常点へ到達しない}
+  \begin{figure}[h]
+    \centering
+    %\caption{教科書 図4.3}
+    \includegraphics[width = 0.7\textwidth]{"images/phrase_diagram_3.png"}
+  \end{figure}
+\end{frame}
+
+\begin{frame}\frametitle{移行経路を解くアルゴリズム}
+  \begin{itemize}
+      \item ためし打ち法: ある$k_0$のもとで、長期的に定常点へ至ることができるような$c_0$を見つける
+      \item 後ろ向き帰納法: 定常点から逆算して$k_0$にたどり着くような経路を探す
+  \end{itemize}
+\end{frame}
+
+
+
+%\begin{frame}\frametitle{分権経済の問題}
+%  \begin{itemize}
+%      \item 企業の問題：
+%        $$
+%        \pi_t = \max_{k_t} f(k_t) - r_t^k k_t
+%        $$
+%        この問題の最適化条件は$r_t^k = f'(k_t)$
+%      \item 家計の問題：
+%        \begin{align*}
+%          &\max_{\{c_t, k_{t+1}\}_{t=0}^{\infty}} \quad \sum_{t=0}^{\infty} \beta^t u(c_t) \\
+%          \text{subject to} &\quad c_t + k_{t+1} = (1 + r_t^k - \delta) k_t + \pi_t , \quad k_0 \ \text{given}
+%        \end{align*}
+%        最大化の条件から以下のオイラー方程式が得られる：
+%          $$
+%          u'(c_t) = \beta u'(c_{t+1}) (1 + r_{t+1}^k - \delta)
+%          $$
+%      \item 企業の最適化の条件より$r_t^k = f'(k_t)$、さらに
+%        $$
+%          \tilde{f}(k_{t+1}) = f(k_t) + (1 - \delta) k_t \Rightarrow \tilde{f}'(k_{t+1}) = f'(k_t) + (1 - \delta)
+%        $$
+%        なので、
+%        $$
+%          u'(c_t) = \beta u'(c_{t+1}) \tilde{f}'(k_{t+1})
+%        $$
+%        資源制約は $\pi_t = \max_{k_t} f(k_t) - r_t^k k_t$から
+%  \end{itemize}
+%\end{frame}
+
+%\begin{frame}\frametitle{}
+%  \begin{figure}[h]
+%    \centering
+%    \caption{教科書 図2.4}
+%    \includegraphics[width = 0.7\textwidth]{"images/egm.png"}
+%  \end{figure}
+%\end{frame}
+
+
+
+%\begin{frame}\frametitle{参考文献}
+%  \begin{itemize}
+%      \item TBA
+%  \end{itemize}
+%\end{frame}
+
+
+
+
+\end{document}
