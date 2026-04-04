@@ -1,3 +1,5 @@
 quant_macro_book/**/*
 quant_macro_slide/**/*
 !quant_macro_slide/**/*.tex
+
+.ipynb_checkpoints/**/*
