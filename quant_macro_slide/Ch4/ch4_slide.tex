@@ -58,7 +58,21 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}\frametitle{社会計画者の問題}
+\begin{frame}\frametitle{私なりのこの章のポイントの理解\dots}
+  \begin{itemize}
+    \item 社会計画者の問題 (1) はベルマン方程式を使って解くのが簡単
+    \item 分権経済の問題 (2) は市場均衡を考えないといけないので解くのが大変
+    \item 厚生経済学の第二基本定理が成り立つなら、(1)と(2)の配分は一致するので、社会計画者の問題を解くことで市場の分配を考えられる
+    \item これが成り立たないと（例：価格を歪める税）、市場の均衡条件を使いながらモデルを解く必要がある
+      \bigskip
+    \item 動学モデルを解く手法として時間反復法を紹介
+    \item 最後に定常点への均衡経路を求める手法を紹介
+      \bigskip
+    %\item （「市場均衡条件を使ってモデルを解くときに時間反復法が有効」という話ではないよね\dots??）
+  \end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{ラムゼーモデルにおける社会計画者の問題}
   \begin{itemize}
       \item 社会計画者の問題：
         \begin{align*}
@@ -69,18 +83,19 @@
         $$
         u'(c_t) = \beta u'(c_{t+1}) \tilde{f}'(k_{t+1})
         $$
+      \item 厚生経済学の第二基本定理が成り立つなら、この配分は競争市場での配分と一致
   \end{itemize}
 \end{frame}
 
-\begin{frame}\frametitle{分権経済の問題}
-  \begin{itemize}
-      \item 利潤最大化をする企業と効用最大化をする家計
-      \item 税などによる歪みがなければ、分権経済における消費・貯蓄の流列と社会計画者による消費・貯蓄の流列は一致 \\
-        $\Rightarrow$ 社会計画者のベルマン方程式を解くことで、分権経済における消費・貯蓄が理解できる
-      \item 歪みがあると、これらの消費・貯蓄の流列が一致しない
-        $\Rightarrow$ 社会計画者のベルマン方程式を解くのとは異なる、別のアプローチが必要
-  \end{itemize}
-\end{frame}
+%\begin{frame}\frametitle{分権経済の問題}
+%  \begin{itemize}
+%      \item 利潤最大化をする企業と効用最大化をする家計
+%      \item 税などによる歪みがなければ、分権経済における消費・貯蓄の流列と社会計画者による消費・貯蓄の流列は一致 \\
+%        $\Rightarrow$ 社会計画者のベルマン方程式を解くことで、分権経済における消費・貯蓄が理解できる
+%      \item 歪みがあると、これらの消費・貯蓄の流列が一致しない
+%        $\Rightarrow$ 社会計画者のベルマン方程式を解くのとは異なる、別のアプローチが必要
+%  \end{itemize}
+%\end{frame}
 
 \begin{frame}\frametitle{時間反復法 (TI) はオイラー方程式を使って動学モデルを解く方法}
   \begin{itemize}
@@ -128,7 +143,7 @@
       \item EGMのステップは以下の通り：
         \begin{enumerate}
           \item 各グリッド$k'_i$上での政策関数の値 $h^{(0)}(k'_i)$を適当に決める
-          \item オイラー方程式から$c_i = u'^{-1} \left( \beta u'(h^{(0)})(k'_i) \tilde{f}' (k'_i) \right)$を各$k'_i$で計算
+          \item オイラー方程式から$c_i = u'^{-1} \left( \beta u'(h^{(0)}(k'_i)) \tilde{f}' (k'_i) \right)$を各$k'_i$で計算
           \item 予算制約から各$k'_i$で$\tilde{f}(k_i) = c_i + k'_i$を解く$k_i$を計算
           \item ステップ2の$c_i$とステップ3の$k_i$のペアから$h^{(1)}(k_i)$を計算し、$h^{(1)}$を近似
           \item ステップ2から4を、$h^{(n)}(k'_i)$が収束するまで繰り返す

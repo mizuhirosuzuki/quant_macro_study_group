@@ -71,10 +71,14 @@
 
 \begin{frame}\frametitle{ロビンソン・クルーソー経済}
   \begin{itemize}
+      \item いわゆるラムゼーモデルを「一人の人間が消費と生産を行っている」と解釈したもの？
+%        \begin{itemize}
+%            \item 別の解釈として「社会計画者が同じ効用を持つ消費者の効用を最大化するように生産と消費の計画を立てる」というものがあり、４章の初めではこの解釈をもとに議論がされる
+%        \end{itemize}
       \item 最適な消費・貯蓄計画をたてる
         \begin{align*}
           &\max_{\{c_t, k_{t+1}\}_{t=0}^T} \quad \sum_{t = 0}^T \beta^t u(c_t) \\
-          \text{subject to} &\quad c_t + k_{t + 1} \le f(k_t) \quad (t = 0, 1, \dots, T)
+          \text{subject to} &\quad c_t + k_{t + 1} \le f(k_t) \quad (t = 0, 1, \dots, T), \quad \text{given $k_0$}
         \end{align*}
         \begin{itemize}
           \item 最後の期（$t = T$）では貯蓄をしても意味がないので、$k_{T+1}=0$
@@ -136,7 +140,7 @@
 
 \begin{frame}\frametitle{3次のスプライン補間}
   \begin{itemize}
-    \item 各期の状態変数$k_t$を離散化すれば（$k_{t, i} \in \{k_1, \dots, k_N \}$）、$V_{T-1}(k_{T-1, i})$は解ける（$V_T(k_T)$が解析的にわかっているので）
+    \item 状態変数$k_{T-1}$を離散化すれば（$k_{{T-1}, i} \in \{k_1, \dots, k_N \}$）、$V_{T-1}(k_{T-1, i})$は解ける（$V_T(k_T)$が解析的にわかっているので）
     \item ただし、このままではグリッド上にない$k_{T-1}$での$V_{T-1}(k_{T-1})$はわからない
       \item $t=T-2$期では
         $$
@@ -146,14 +150,14 @@
     \item 内挿法で$V_{T-1}(k_{T-1})$を近似する！（教科書2.8.1も参照）
     \item 3次のスプライン補間：
       \begin{itemize}
-        \item $k_T \in [k_{i}, k_{i+1}]$について、$V_{T-1}(k_{T-1})$を$\tilde{V}_{T-1}(k_{T-1}) = a_i + b_i (k_{T-1} - k_i) + c_i (k_{T-1} - k_i)^2 + d_i (k_{T-1} - k_i)^3$で近似
+        \item $k_{T-1} \in [k_{i}, k_{i+1}]$について、$V_{T-1}(k_{T-1})$を$\tilde{V}_{T-1}(k_{T-1}) = a_i + b_i (k_{T-1} - k_i) + c_i (k_{T-1} - k_i)^2 + d_i (k_{T-1} - k_i)^3$で近似
         \item $a_i, b_i, c_i, d_i$は各グリッド上で$\tilde{V}_{T-1}(k_{T-1})$が連続でこの一階微分、二階微分も連続になるように決められる
         \item （ざっくりいうと、$\tilde{V}_{T-1}(k_{T-1})$がいい感じに滑らかになるように決められる）
       \end{itemize}
   \end{itemize}
 \end{frame}
 
-\begin{frame}\frametitle{無限期間モデル}
+\begin{frame}\frametitle{無限期間モデルに拡張すると、価値関数、政策関数が時間に依存しなくなる}
   \begin{itemize}
       \item 無限期間モデルに拡張：
         \begin{align*}
@@ -171,7 +175,7 @@
         \begin{itemize}
             \item ベルマン方程式の右辺の最適化問題を考えて
               $$
-              u'(f(k) + (1 - \delta) k - k') = \beta V'(k')
+              u'(f(k) + (1 - \delta) k - k') + \beta V'(k') = 0
               $$
             \item \href{https://www.ier.hit-u.ac.jp/~nabe/DP1JIS.pdf}{包絡線定理}より、ベルマン方程式の両辺を$k$で微分して
               $$
@@ -181,7 +185,7 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}\frametitle{価値関数反復法（VFI）}
+\begin{frame}\frametitle{価値関数反復法（VFI）により、（時間に依存しない）価値関数を求める}
   \begin{itemize}
     \item 適当に各$k_i$での$V^{(0)}(k_i)$を決めて、以下のように$V^{(n)}(k)$を更新する
       $$
@@ -196,9 +200,8 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}\frametitle{政策関数反復法 （PFI）}
+\begin{frame}\frametitle{政策関数反復法 （PFI）は政策関数の繰り返し計算を使うアルゴリズムで、VFIより早い}
   \begin{itemize}
-    \item VFIより早い、政策関数の繰り返し計算を使うアルゴリズム
     \item いい感じに各$k_i$での政策関数$g^{[0]}(k_i)$を決めて、
       \begin{enumerate}
         \item 適当に各$k_i$での$\tilde{V}^{(0)}(k_i)$を決めたあとに 
@@ -241,7 +244,22 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}\frametitle{構造推定}
+\begin{frame}\frametitle{VFI vs PFI と収束条件}
+
+  \begin{figure}[h]
+    \centering
+    \caption{収束時点での繰り返し誤差の比較（一段目は価値関数の、二段目は政策関数の誤差）}
+    \includegraphics[width = 0.7\textwidth]{"images/error_comparison.png"}
+  \end{figure}
+
+  \begin{itemize}
+      \item VFI $+$ 政策関数のときは価値関数の誤差が大きいまま計算が終わる（教科書図3.4にあるように、政策関数の方が価値関数より収束が早いため）
+      \item PFIでは価値関数も素早く収束する
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}\frametitle{動学モデルに基づく構造推定ではこの章で学んだ手法を使って政策変数を得ることになる}
   \begin{itemize}
       \item 「経済主体の意思決定に基づく理論モデルを構築したうえでパラメータを推定して分析する方法を構造推定と呼ぶ」
       \item 教科書にある例をめっちゃ抽象化するとこんな感じ：
@@ -261,6 +279,17 @@
             \item パラメータの識別条件は何？（どんなときに推定にバイアスが生まれる？）
         \end{itemize}
   \end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{モデルの予測と実際のデータとの乖離が小さくなるようにパラメータを選んでいく}
+  \begin{figure}[h]
+    \centering
+    \caption{異なるパラメータでシミュレーションされた平均消費}
+    \includegraphics[width = 0.7\textwidth]{"images/average_cons.png"}
+  \end{figure}
+\end{frame}
+
+\begin{frame}\frametitle{お絵描きスペース}
 \end{frame}
 
 %\begin{frame}\frametitle{}
