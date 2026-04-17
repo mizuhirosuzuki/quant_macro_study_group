@@ -1,4 +1,5 @@
 quant_macro_book/**/*
 quant_macro_slide/**/*
+**/images/**/*
 
 .ipynb_checkpoints/**/*
