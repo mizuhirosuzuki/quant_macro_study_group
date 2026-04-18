@@ -22,7 +22,7 @@ using LaTeXStrings
 #  CREATE MODEL         #
 # ===================== #
 
-m = create_model(b=3.0, maxK=30.0)
+m = create_model(b=3.0, maxK=40.0)
 
 # =============================== #
 #  SOLVE STATIONARY EQUILIBRIUM   #
