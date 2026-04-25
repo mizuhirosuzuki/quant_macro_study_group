@@ -17,10 +17,11 @@ struct Model{TI<:Integer, TF<:AbstractFloat}
     maxA::TF          # upper bound on assets
     curvA::TF         # grid curvature (1 = uniform)
 
-    meaJ::Vector{TF}  # age distribution (sums to 1)
+    meaJ::Vector{TF}  # age distribution (sums to 1; should be consistent with s)
     L::TF             # aggregate labor supply
     gride::Vector{TF} # productivity grid (mean ≈ 1)
     Pe::Matrix{TF}    # productivity transition matrix
+    s::Vector{TF}     # survival probability from age j to j+1 (s[Nj] = 0)
 
     b::TF             # ad-hoc borrowing limit (0 = none)
     NT::TI            # transition horizon

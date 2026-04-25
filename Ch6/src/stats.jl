@@ -50,8 +50,9 @@ function compute_lifecycle_stats(m::Model, grids, res)
     return (; afunJ, afunJE, cfun, sfun, srat, cfunJ, sfunJE, sratJE, yvec)
 end
 
-function plot_lifecycle(m::Model, grids, stats; outdir::AbstractString, age_start::Int=20,
-                        ref_age::Int=21)
+function plot_lifecycle(m::Model, grids, stats; outdir::AbstractString,
+                        age_start::Int = 20, ref_age::Int = 21,
+                        suffix::AbstractString = "")
     isdir(outdir) || mkpath(outdir)
     grida = grids[1]
     ages  = collect(age_start:age_start + m.Nj - 1)
@@ -62,21 +63,21 @@ function plot_lifecycle(m::Model, grids, stats; outdir::AbstractString, age_star
     plot!(p1, ages, norm .* stats.afunJE[:, 1], ls=:dashdot, lc=:black, lw=3, label="low")
     xlims!(p1, age_start, age_start + m.Nj - 1)
     title!(p1, "Asset (Stock) By Age and Prod"); xlabel!(p1, "Age"); ylabel!(p1, "Asset")
-    savefig(p1, joinpath(outdir, "fig_olg2_a.pdf"))
+    savefig(p1, joinpath(outdir, "fig_olg2_a$(suffix).pdf"))
 
     p2 = plot(grida, stats.srat[ref_age, 2, :], ls=:solid,   lc=:black, lw=3, label="high")
     plot!(p2, grida, stats.srat[ref_age, 1, :], ls=:dashdot, lc=:black, lw=3, label="low")
     plot!(p2, grida, zerovec, ls=:dot, lc=:black, lw=1, label="")
     xlims!(p2, 0.0, 20.0)
     title!(p2, "Saving Rate By Asset and Prod"); xlabel!(p2, "Asset"); ylabel!(p2, "Saving Rate")
-    savefig(p2, joinpath(outdir, "fig_olg2_s.pdf"))
+    savefig(p2, joinpath(outdir, "fig_olg2_s$(suffix).pdf"))
 
     p3 = plot(grida, stats.sfun[ref_age, 2, :], ls=:solid,   lc=:black, lw=3, label="high")
     plot!(p3, grida, stats.sfun[ref_age, 1, :], ls=:dashdot, lc=:black, lw=3, label="low")
     plot!(p3, grida, zerovec, ls=:dot, lc=:black, lw=1, label="")
     xlims!(p3, 0.0, 20.0)
     title!(p3, "Saving Level By Asset and Prod"); xlabel!(p3, "Asset"); ylabel!(p3, "Saving (level)")
-    savefig(p3, joinpath(outdir, "fig_olg2_slevel.pdf"))
+    savefig(p3, joinpath(outdir, "fig_olg2_slevel$(suffix).pdf"))
 
     return (p1, p2, p3)
 end

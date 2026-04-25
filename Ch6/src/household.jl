@@ -1,9 +1,9 @@
-function income_grid(m::Model, w, tau, rho)
+function income_grid(m::Model, w, tau, rho; q::Real = 0.0)
     yvec = zeros(m.Nj, m.Ne)
     for jc in 1:m.Njw, ec in 1:m.Ne
-        yvec[jc, ec] = (1 - tau) * w * m.gride[ec]
+        yvec[jc, ec] = (1 - tau) * w * m.gride[ec] + q
     end
-    yvec[m.Njw+1:m.Nj, :] .= rho * w
+    yvec[m.Njw+1:m.Nj, :] .= rho * w + q
     return yvec
 end
 
@@ -11,6 +11,9 @@ end
 # output arrays. `vfun_next` is the continuation value (next period's value
 # function for the transition; the same array for stationary iteration —
 # aliasing is safe because the loop reads age jc+1 only after writing it).
+#
+# Continuation is weighted by β·s_j to encode age-j survival probability:
+#     V(j) = max { u(c) + β s_j E[V(j+1)] }.
 #
 # Speed tricks inside the inner search:
 #   monotonicity — optimal acc*(ac) is non-decreasing in ac, so scan starts
@@ -32,6 +35,7 @@ function solve_household_period!(vfun, afunG, afun,
     end
 
     for jc in m.Nj-1:-1:1
+        beta_s = m.beta * m.s[jc]
         Threads.@threads for ec in 1:m.Ne
             y = yvec[jc, ec]
             acc_lo = 1
@@ -49,7 +53,7 @@ function solve_household_period!(vfun, afunG, afun,
                             pra1vec[acc] * vfun_next[jc+1, ecc, acc1]
                           + pra2vec[acc] * vfun_next[jc+1, ecc, acc2])
                     end
-                    v = log(c) + m.beta * vpr
+                    v = log(c) + beta_s * vpr
                     if v > best_val
                         best_val = v
                         best_idx = acc
@@ -65,14 +69,4 @@ function solve_household_period!(vfun, afunG, afun,
         end
     end
     return nothing
-end
-
-function solve_household_period(m::Model, grids, capital_grid_translations,
-                                vfun_next, r, yvec)
-    vfun  = zeros(m.Nj, m.Ne, m.Na)
-    afunG = zeros(Int64, m.Nj, m.Ne, m.Na)
-    afun  = zeros(m.Nj, m.Ne, m.Na)
-    solve_household_period!(vfun, afunG, afun, m, grids,
-                             capital_grid_translations, vfun_next, r, yvec)
-    return vfun, afunG, afun
 end

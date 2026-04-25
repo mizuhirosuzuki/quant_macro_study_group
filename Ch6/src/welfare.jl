@@ -52,7 +52,7 @@ end
 # Plots ---------------------------------------------------------------
 
 function plot_welfare_newborn_cohorts(m::Model, welfTR; outdir::AbstractString,
-                                       filename::AbstractString = "fig_welf_tr.pdf",
+                                       suffix::AbstractString = "",
                                        xlimits = (1, 60),
                                        ylimits = (0.01, 0.08))
     isdir(outdir) || mkpath(outdir)
@@ -62,13 +62,13 @@ function plot_welfare_newborn_cohorts(m::Model, welfTR; outdir::AbstractString,
     xlims!(p, xlimits...)
     ylims!(p, ylimits...)
     xlabel!(p, "Cohort"); ylabel!(p, "CEV")
-    savefig(p, joinpath(outdir, filename))
+    savefig(p, joinpath(outdir, "fig_welf_tr$(suffix).pdf"))
     return p
 end
 
 function plot_welfare_by_age(m::Model, welf0_JE; outdir::AbstractString,
                               age_start::Int = 20,
-                              filename::AbstractString = "fig_welf_0.pdf",
+                              suffix::AbstractString = "",
                               ylimits = (-0.1, 0.04))
     isdir(outdir) || mkpath(outdir)
     ages = collect(age_start:age_start + m.Nj - 1)
@@ -76,18 +76,18 @@ function plot_welfare_by_age(m::Model, welf0_JE; outdir::AbstractString,
     plot!(p, ages, welf0_JE[:, 2], ls=:solid, c=:black, lw=3, label="high")
     ylims!(p, ylimits...)
     xlabel!(p, "Age"); ylabel!(p, "CEV")
-    savefig(p, joinpath(outdir, filename))
+    savefig(p, joinpath(outdir, "fig_welf_0$(suffix).pdf"))
     return p
 end
 
 function plot_welfare_by_asset(::Model, grids, welf; jc::Int = 21,
                                 outdir::AbstractString,
-                                filename::AbstractString = "fig_welf_aged_40.pdf")
+                                suffix::AbstractString = "")
     isdir(outdir) || mkpath(outdir)
     grida = grids[1]
     p = plot(grida, welf[jc, 1, :], ls=:dash,  c=:black, lw=3, label="low", legend=:bottomright)
     plot!(p, grida, welf[jc, 2, :], ls=:solid, c=:black, lw=3, label="high")
     xlabel!(p, "Asset"); ylabel!(p, "CEV")
-    savefig(p, joinpath(outdir, filename))
+    savefig(p, joinpath(outdir, "fig_welf_aged_40$(suffix).pdf"))
     return p
 end

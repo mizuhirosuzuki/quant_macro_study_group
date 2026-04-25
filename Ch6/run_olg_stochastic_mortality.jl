@@ -37,16 +37,22 @@ const GRIDE   = [1.0 - 0.3, 1.0 + 0.3]
 const PE      = [0.8  0.2;
                  0.2  0.8]
 
-# Benchmark: no mortality — everyone survives through age Nj-1 with certainty
-# and then exits. See run_olg_stochastic_mortality.jl for the version with
-# probabilistic survival and accidental bequests.
-const S = ones(NJ)
+# Mortality: full survival through working life, linear decline 0.99 → 0.5
+# through retirement, certain death at the last age. Replace with a
+# mortality-table calibration if you need realistic life expectancy.
+const S = begin
+    s = ones(NJ)
+    s[NJW+1:NJ-1] .= range(0.99, 0.5; length = NJ - NJW - 1)
+    s[NJ] = 0.0
+    s
+end
 
 # Population shares consistent with S (meaJ[j+1] = s[j] · meaJ[j]).
 const MEAJ    = stationary_age_distribution(S)
 const L_AGG   = sum(MEAJ[1:NJW])
 
 const IMGDIR  = joinpath(@__DIR__, "images")
+const SUFFIX  = "_mort"
 
 make_model(rho::Real) = Model(
     ALPHA, DELTA, BETA, float(rho),
@@ -80,7 +86,7 @@ K_SS1, mea_SS1, vfun_SS1, q_SS1 = res_ss1.K, res_ss1.mea, res_ss1.vfun, res_ss1.
 
 # Life-cycle stats + plots for the initial SS
 stats_ss0 = compute_lifecycle_stats(m_ss0, grids, res_ss0)
-plot_lifecycle(m_ss0, grids, stats_ss0; outdir=IMGDIR)
+plot_lifecycle(m_ss0, grids, stats_ss0; outdir=IMGDIR, suffix=SUFFIX)
 
 # ==================== #
 #  TRANSITION          #
@@ -98,8 +104,9 @@ res_transition = compute_transition(
 rT, wT = compute_price_paths(m_ss0, res_transition.KT0)
 
 plot_transition_capital(m_ss0, res_transition.KT0;
-                        K_SS0 = K_SS0, K_SS1 = K_SS1, outdir = IMGDIR)
-plot_transition_interest(m_ss0, rT; outdir = IMGDIR)
+                        K_SS0 = K_SS0, K_SS1 = K_SS1,
+                        outdir = IMGDIR, suffix = SUFFIX)
+plot_transition_interest(m_ss0, rT; outdir = IMGDIR, suffix = SUFFIX)
 
 # ======================== #
 #  WELFARE (CEV)           #
@@ -109,8 +116,9 @@ welf0    = compute_welfare_existing(m_ss0, res_transition.vfun_TR0, vfun_SS0, be
 welf0_JE = average_welfare_existing(m_ss0, welf0, mea_SS0)
 welfTR   = compute_welfare_newborn(m_ss0, res_transition.vfun_TR, vfun_SS0, betaJ)
 
-plot_welfare_newborn_cohorts(m_ss0, welfTR; outdir = IMGDIR)
-plot_welfare_by_age(m_ss0, welf0_JE; outdir = IMGDIR)
-plot_welfare_by_asset(m_ss0, grids, welf0; jc = 21, outdir = IMGDIR)
+plot_welfare_newborn_cohorts(m_ss0, welfTR; outdir = IMGDIR, suffix = SUFFIX)
+plot_welfare_by_age(m_ss0, welf0_JE; outdir = IMGDIR, suffix = SUFFIX)
+plot_welfare_by_asset(m_ss0, grids, welf0; jc = 21, outdir = IMGDIR, suffix = SUFFIX)
 
 println("Done. K_SS0=$(K_SS0)  K_SS1=$(K_SS1)  final KT[NT]=$(res_transition.KT0[end])")
+println("      q_SS0=$(q_SS0)  q_SS1=$(q_SS1)  final qT[NT]=$(res_transition.qT[end])")
